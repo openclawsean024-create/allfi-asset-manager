@@ -91,7 +91,7 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
     cumulative += (d.value / total) * 360;
     return { ...d, start, end: cumulative };
   });
-  const cx = 90, cy = 90, r = 70;
+  const cx = 90, cy = 90, r = 68;
   function arcPath(startDeg: number, endDeg: number) {
     const start = ((startDeg - 90) * Math.PI) / 180;
     const end = ((endDeg - 90) * Math.PI) / 180;
@@ -103,23 +103,23 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
     return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
   }
   return (
-    <div className="flex items-center gap-10">
+    <div className="flex items-center gap-8">
       <svg width="180" height="180" viewBox="0 0 180 180">
         {slices.map((s, i) => (
           <path key={i} d={arcPath(s.start, s.end)} fill={s.color} />
         ))}
-        <circle cx={cx} cy={cy} r={52} fill="white" />
-        <text x={cx} y={cy - 8} textAnchor="middle" dominantBaseline="middle" fontSize="15" fontWeight="700" fill="#0a1628">
+        <circle cx={cx} cy={cy} r={50} fill="white" />
+        <text x={cx} y={cy - 6} textAnchor="middle" dominantBaseline="middle" fontSize="13" fontWeight="700" fill="#003D33">
           {formatCurrency(total, 'USD').replace('.00', '').replace('$', ' $')}
         </text>
-        <text x={cx} y={cy + 10} textAnchor="middle" fill="#9ca3af" fontSize="11">Total</text>
+        <text x={cx} y={cy + 11} textAnchor="middle" fill="#8FA3AE" fontSize="10">Total</text>
       </svg>
       <div className="flex flex-col gap-3">
         {slices.map((s, i) => (
           <div key={i} className="flex items-center gap-3">
             <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-            <span className="text-sm text-[var(--text-secondary)]">{s.label}</span>
-            <span className="text-sm font-semibold ml-auto pl-8">{formatCurrency(s.value)}</span>
+            <span className="text-sm text-[--color-text-secondary]">{s.label}</span>
+            <span className="text-sm font-semibold ml-auto pl-4 text-[--color-text-primary]">{formatCurrency(s.value)}</span>
           </div>
         ))}
       </div>
@@ -127,199 +127,181 @@ function DonutChart({ data }: { data: { label: string; value: number; color: str
   );
 }
 
-function BankAccountRow({ account }: { account: AllAccounts['bankAccounts'][0] }) {
+function Badge({ children, variant = 'default' }: { children: React.ReactNode; variant?: 'green' | 'default' | 'success' | 'danger' }) {
+  const map: Record<string, string> = {
+    green: 'background:#E8F9ED;color:#00B900',
+    success: 'background:#D1FAE5;color:#00875A',
+    danger: 'background:#FEE2E2;color:#DE3618',
+    default: 'background:#F0F4F8;color:#4A6572',
+  };
+  const [bg, color] = map[variant].split(';');
   return (
-    <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16, boxShadow: 'var(--shadow-sm)', transition: 'box-shadow 0.2s' }}
-      onMouseEnter={e => (e.currentTarget.style.boxShadow = 'var(--shadow-md)')}
-      onMouseLeave={e => (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')}>
-      <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>
-        {account.institution[0]}
+    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, letterSpacing: '0.03em', background: bg, color }}>
+      {children}
+    </span>
+  );
+}
+
+function BankAccountCard({ account }: { account: AllAccounts['bankAccounts'][0] }) {
+  return (
+    <div className="bg-white rounded-2xl p-5 border border-[--color-border] shadow-sm hover:shadow-md transition-shadow cursor-default">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #003D33, #00594C)' }}>
+            {account.institution[0]}
+          </div>
+          <div>
+            <p className="text-xs text-[--color-text-muted] font-medium">{account.institution}</p>
+            <p className="text-sm font-semibold text-[--color-text-primary]">{account.accountName}</p>
+          </div>
+        </div>
+        <Badge variant="green">{account.accountType}</Badge>
       </div>
-      <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 2 }}>{account.institution}</p>
-        <p style={{ fontSize: 15, fontWeight: 600 }}>{account.accountName}</p>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-          {account.lastTransaction.date} · {account.lastTransaction.description}
-        </p>
-      </div>
-      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <p style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-serif)' }}>{formatCurrency(account.balance)}</p>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{account.accountType}</p>
+      <div className="flex items-end justify-between">
+        <p className="text-2xl font-bold font-serif text-[--color-text-primary]">{formatCurrency(account.balance)}</p>
+        <div className="text-right">
+          <p className="text-xs text-[--color-text-muted]">{account.lastTransaction.description}</p>
+          <p className="text-xs text-[--color-text-muted]">{account.lastTransaction.date}</p>
+        </div>
       </div>
     </div>
   );
 }
 
-function StockAccountRow({ account }: { account: AllAccounts['stockAccounts'][0] }) {
-  const gainColor = account.totalGain >= 0 ? 'var(--success)' : 'var(--danger)';
-  const gainBg = account.totalGain >= 0 ? 'var(--success-bg)' : 'var(--danger-bg)';
+function StockAccountCard({ account }: { account: AllAccounts['stockAccounts'][0] }) {
+  const gainColor = account.totalGain >= 0 ? '#00875A' : '#DE3618';
   return (
-    <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 24px', boxShadow: 'var(--shadow-sm)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: 14 }}>
+    <div className="bg-white rounded-2xl p-5 border border-[--color-border] shadow-sm">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #003D33, #00594C)' }}>
             {account.institution[0]}
           </div>
           <div>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{account.institution}</p>
-            <p style={{ fontSize: 14, fontWeight: 600 }}>{account.accountName}</p>
+            <p className="text-xs text-[--color-text-muted] font-medium">{account.institution}</p>
+            <p className="text-sm font-semibold text-[--color-text-primary]">{account.accountName}</p>
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-serif)' }}>{formatCurrency(account.totalValue)}</p>
-          <span style={{ fontSize: 12, fontWeight: 600, color: gainColor, background: gainBg, padding: '2px 8px', borderRadius: 999 }}>
-            {formatPercent(account.totalGainPercent)}
-          </span>
+        <div className="text-right">
+          <p className="text-xl font-bold font-serif text-[--color-text-primary]">{formatCurrency(account.totalValue)}</p>
+          <span className="text-xs font-bold" style={{ color: gainColor }}>{formatPercent(account.totalGainPercent)}</span>
         </div>
       </div>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ borderBottom: '1px solid var(--border)' }}>
-            {['Symbol', 'Shares', 'Price', 'Total', 'Gain'].map(h => (
-              <th key={h} style={{ textAlign: 'right', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', padding: '6px 8px', letterSpacing: '0.04em' }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {account.holdings.map((h) => {
-            const hgColor = h.totalGain >= 0 ? 'var(--success)' : 'var(--danger)';
-            return (
-              <tr key={h.symbol} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '8px 8px', textAlign: 'right' }}>
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13 }}>{h.symbol}</span>
-                </td>
-                <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>{h.shares}</td>
-                <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>{formatCurrency(h.currentPrice)}</td>
-                <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, fontWeight: 600 }}>{formatCurrency(h.totalValue)}</td>
-                <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, fontWeight: 700, color: hgColor }}>{formatPercent(h.totalGainPercent)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="border-t border-[--color-border] pt-3">
+        {account.holdings.map((h, i) => (
+          <div key={h.symbol} className={`flex items-center justify-between py-2 ${i < account.holdings.length - 1 ? 'border-b border-[--color-border]' : ''}`}>
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-bold text-sm text-[--color-text-primary]">{h.symbol}</span>
+              <span className="text-xs text-[--color-text-muted]">{h.shares} shares</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-[--color-text-muted]">{formatCurrency(h.currentPrice)}</span>
+              <span className="text-sm font-semibold">{formatCurrency(h.totalValue)}</span>
+              <span className="text-xs font-bold w-16 text-right" style={{ color: h.totalGain >= 0 ? '#00875A' : '#DE3618' }}>
+                {formatPercent(h.totalGainPercent)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function CryptoAccountRow({ account }: { account: AllAccounts['cryptoAccounts'][0] }) {
-  const changeColor = account.totalChange24h >= 0 ? 'var(--success)' : 'var(--danger)';
-  const changeBg = account.totalChange24h >= 0 ? 'var(--success-bg)' : 'var(--danger-bg)';
+function CryptoAccountCard({ account }: { account: AllAccounts['cryptoAccounts'][0] }) {
+  const changeColor = account.totalChange24h >= 0 ? '#00875A' : '#DE3618';
   return (
-    <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 24px', boxShadow: 'var(--shadow-sm)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 8, background: 'linear-gradient(135deg, var(--gold), var(--gold-light))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: 14 }}>
+    <div className="bg-white rounded-2xl p-5 border border-[--color-border] shadow-sm">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold" style={{ background: 'linear-gradient(135deg, #00B900, #00D26A)' }}>
             {account.institution[0]}
           </div>
           <div>
-            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{account.institution}</p>
-            <p style={{ fontSize: 14, fontWeight: 600 }}>{account.accountName}</p>
+            <p className="text-xs text-[--color-text-muted] font-medium">{account.institution}</p>
+            <p className="text-sm font-semibold text-[--color-text-primary]">{account.accountName}</p>
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-serif)' }}>{formatCurrency(account.totalValue)}</p>
-          <span style={{ fontSize: 12, fontWeight: 600, color: changeColor, background: changeBg, padding: '2px 8px', borderRadius: 999 }}>
-            {formatPercent(account.totalChange24h)} 24h
-          </span>
+        <div className="text-right">
+          <p className="text-xl font-bold font-serif text-[--color-text-primary]">{formatCurrency(account.totalValue)}</p>
+          <span className="text-xs font-bold" style={{ color: changeColor }}>{formatPercent(account.totalChange24h)} 24h</span>
         </div>
       </div>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ borderBottom: '1px solid var(--border)' }}>
-            {['Asset', 'Amount', 'Price', 'Value', '24h'].map(h => (
-              <th key={h} style={{ textAlign: 'right', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', padding: '6px 8px', letterSpacing: '0.04em' }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {account.assets.map((a) => {
-            const agColor = a.change24h >= 0 ? 'var(--success)' : 'var(--danger)';
-            return (
-              <tr key={a.symbol} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '8px 8px', textAlign: 'right' }}>
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13 }}>{a.symbol}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>{a.name}</span>
-                </td>
-                <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>{a.amount}</td>
-                <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>{formatCurrency(a.currentPrice)}</td>
-                <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, fontWeight: 600 }}>{formatCurrency(a.value)}</td>
-                <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, fontWeight: 700, color: agColor }}>{formatPercent(a.change24h)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="border-t border-[--color-border] pt-3">
+        {account.assets.map((a, i) => (
+          <div key={a.symbol} className={`flex items-center justify-between py-2 ${i < account.assets.length - 1 ? 'border-b border-[--color-border]' : ''}`}>
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-bold text-sm text-[--color-text-primary]">{a.symbol}</span>
+              <span className="text-xs text-[--color-text-muted]">{a.amount}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-[--color-text-muted]">{formatCurrency(a.currentPrice)}</span>
+              <span className="text-sm font-semibold">{formatCurrency(a.value)}</span>
+              <span className="text-xs font-bold w-16 text-right" style={{ color: a.change24h >= 0 ? '#00875A' : '#DE3618' }}>
+                {formatPercent(a.change24h)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 export default function Dashboard() {
   const [data, setData] = useState<AllAccounts>(SEED_DATA);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/accounts')
       .then((r) => r.json())
-      .then((apiData: AllAccounts) => {
-        setData(apiData);
-      })
-      .catch((e) => {
-        // silently keep seed data on failure
-        setError(e.message);
-      })
-      .finally(() => setLoading(false));
+      .then((apiData: AllAccounts) => setData(apiData))
+      .catch(() => {});
   }, []);
 
   if (!data) return null;
 
   const chartData = [
-    { label: 'Banking', value: data.netWorthByType.bank, color: '#0a1628' },
-    { label: 'Securities', value: data.netWorthByType.stocks, color: '#2d4a7a' },
-    { label: 'Digital Assets', value: data.netWorthByType.crypto, color: '#b8960c' },
+    { label: 'Banking', value: data.netWorthByType.bank, color: '#003D33' },
+    { label: 'Securities', value: data.netWorthByType.stocks, color: '#00594C' },
+    { label: 'Digital Assets', value: data.netWorthByType.crypto, color: '#00B900' },
   ];
 
-  const totalNetWorth = data.totalNetWorth;
-  const bankPct = ((data.netWorthByType.bank / totalNetWorth) * 100).toFixed(1);
-  const stockPct = ((data.netWorthByType.stocks / totalNetWorth) * 100).toFixed(1);
-  const cryptoPct = ((data.netWorthByType.crypto / totalNetWorth) * 100).toFixed(1);
-
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="min-h-screen bg-[--color-bg]">
+
       {/* ─── TOPBAR ─── */}
-      <div style={{ background: 'var(--navy)', color: 'white' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 32px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 6, background: 'linear-gradient(135deg, #d4af37, #b8960c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13, color: 'var(--navy)' }}>
+      <header style={{ background: '#00261E', color: 'white' }}>
+        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm" style={{ background: '#00B900' }}>
               A
             </div>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>AllFi</span>
-            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 400, letterSpacing: '0.1em', marginLeft: 4 }}>PRIVATE</span>
+            <span className="font-serif text-lg font-bold tracking-tight text-white">AllFi</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Portfolio Overview</span>
-            <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.15)' }} />
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Total Net Worth</p>
-              <p style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-serif)' }}>{formatCurrency(data.totalNetWorth)}</p>
+          <div className="flex items-center gap-5">
+            <span className="text-xs text-white/40 tracking-widest uppercase">Portfolio</span>
+            <div className="w-px h-5 bg-white/20" />
+            <div className="text-right">
+              <p className="text-[10px] text-white/40 tracking-widest uppercase">Net Worth</p>
+              <p className="text-sm font-bold font-serif">{formatCurrency(data.totalNetWorth)}</p>
             </div>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600 }}>
+            <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs font-bold text-white">
               U
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* ─── SUBNAV ─── */}
-      <div style={{ background: 'white', borderBottom: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 32px', height: 44, display: 'flex', alignItems: 'center', gap: 4 }}>
-          {['Overview', 'Banking', 'Securities', 'Digital Assets', 'Insights'].map((item, i) => (
-            <button key={item} style={{
-              padding: '4px 14px', borderRadius: 6, fontSize: 13, fontWeight: i === 0 ? 700 : 500,
-              color: i === 0 ? 'var(--navy)' : 'var(--text-secondary)',
-              background: i === 0 ? 'var(--gold-pale)' : 'transparent',
-              border: 'none', cursor: 'pointer', letterSpacing: '0.01em'
-            }}>
+      {/* ─── NAV TABS ─── */}
+      <div className="bg-white border-b border-[--color-border]">
+        <div className="max-w-5xl mx-auto px-6 h-11 flex items-center gap-1">
+          {['Overview', 'Banking', 'Securities', 'Digital Assets'].map((item, i) => (
+            <button
+              key={item}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${i === 0 ? 'bg-[#E8F9ED] text-[#00B900] font-bold' : 'text-[--color-text-secondary] hover:bg-gray-100'}`}
+            >
               {item}
             </button>
           ))}
@@ -327,90 +309,86 @@ export default function Dashboard() {
       </div>
 
       {/* ─── MAIN ─── */}
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 32px 80px' }}>
+      <main className="max-w-5xl mx-auto px-6 py-8 flex flex-col gap-8">
 
-        {/* ─── HERO CARD ─── */}
-        <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: '40px 48px', boxShadow: 'var(--shadow-md)', marginBottom: 32, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 40 }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 10 }}>
-              Total Net Worth · As of {new Date(data.lastUpdated).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </p>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--navy)', lineHeight: 1.1, marginBottom: 24 }}>
-              {formatCurrency(data.totalNetWorth)}
-            </h1>
-            <div style={{ display: 'flex', gap: 24 }}>
-              {[
-                { label: 'Banking', value: bankPct + '%', amount: formatCurrency(data.netWorthByType.bank) },
-                { label: 'Securities', value: stockPct + '%', amount: formatCurrency(data.netWorthByType.stocks) },
-                { label: 'Digital Assets', value: cryptoPct + '%', amount: formatCurrency(data.netWorthByType.crypto) },
-              ].map(item => (
-                <div key={item.label}>
-                  <p style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 2 }}>{item.label}</p>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--navy)' }}>{item.value}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.amount}</p>
-                </div>
-              ))}
+        {/* ─── NET WORTH CARD ─── */}
+        <div className="bg-white rounded-2xl p-8 border border-[--color-border] shadow-sm">
+          <p className="text-xs font-bold tracking-widest uppercase text-[--color-text-muted] mb-3">
+            Total Net Worth · {new Date(data.lastUpdated).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          </p>
+          <div className="flex items-end justify-between gap-8">
+            <div>
+              <h1 className="text-4xl font-bold font-serif text-[#00261E] tracking-tight mb-6 leading-none">
+                {formatCurrency(data.totalNetWorth)}
+              </h1>
+              <div className="flex gap-8">
+                {[
+                  { label: 'Banking', pct: ((data.netWorthByType.bank / data.totalNetWorth) * 100).toFixed(1), amount: formatCurrency(data.netWorthByType.bank) },
+                  { label: 'Securities', pct: ((data.netWorthByType.stocks / data.totalNetWorth) * 100).toFixed(1), amount: formatCurrency(data.netWorthByType.stocks) },
+                  { label: 'Digital Assets', pct: ((data.netWorthByType.crypto / data.totalNetWorth) * 100).toFixed(1), amount: formatCurrency(data.netWorthByType.crypto) },
+                ].map(item => (
+                  <div key={item.label}>
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-[--color-text-muted] mb-1">{item.label}</p>
+                    <p className="text-base font-bold text-[#00261E]">{item.pct}%</p>
+                    <p className="text-xs text-[--color-text-muted]">{item.amount}</p>
+                  </div>
+                ))}
+              </div>
             </div>
+            <DonutChart data={chartData} />
           </div>
-          <DonutChart data={chartData} />
         </div>
 
         {/* ─── BANKING ─── */}
         {data.bankAccounts.length > 0 && (
-          <section style={{ marginBottom: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--navy)' }} />
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700, color: 'var(--navy)' }}>Banking</h2>
-              </div>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{formatCurrency(data.netWorthByType.bank)} total</span>
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 rounded-full bg-[#003D33]" />
+              <h2 className="text-base font-bold text-[#00261E]">Banking</h2>
+              <span className="text-xs text-[--color-text-muted] ml-auto">{formatCurrency(data.netWorthByType.bank)}</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {data.bankAccounts.map(acc => <BankAccountRow key={acc.id} account={acc} />)}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {data.bankAccounts.map(acc => <BankAccountCard key={acc.id} account={acc} />)}
             </div>
           </section>
         )}
 
         {/* ─── SECURITIES ─── */}
         {data.stockAccounts.length > 0 && (
-          <section style={{ marginBottom: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--navy-light)' }} />
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700, color: 'var(--navy)' }}>Securities</h2>
-              </div>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{formatCurrency(data.netWorthByType.stocks)} total</span>
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 rounded-full bg-[#00594C]" />
+              <h2 className="text-base font-bold text-[#00261E]">Securities</h2>
+              <span className="text-xs text-[--color-text-muted] ml-auto">{formatCurrency(data.netWorthByType.stocks)}</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {data.stockAccounts.map(acc => <StockAccountRow key={acc.id} account={acc} />)}
+            <div className="flex flex-col gap-4">
+              {data.stockAccounts.map(acc => <StockAccountCard key={acc.id} account={acc} />)}
             </div>
           </section>
         )}
 
         {/* ─── DIGITAL ASSETS ─── */}
         {data.cryptoAccounts.length > 0 && (
-          <section style={{ marginBottom: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)' }} />
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700, color: 'var(--navy)' }}>Digital Assets</h2>
-              </div>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{formatCurrency(data.netWorthByType.crypto)} total</span>
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-2 h-2 rounded-full bg-[#00B900]" />
+              <h2 className="text-base font-bold text-[#00261E]">Digital Assets</h2>
+              <span className="text-xs text-[--color-text-muted] ml-auto">{formatCurrency(data.netWorthByType.crypto)}</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {data.cryptoAccounts.map(acc => <CryptoAccountRow key={acc.id} account={acc} />)}
+            <div className="flex flex-col gap-4">
+              {data.cryptoAccounts.map(acc => <CryptoAccountCard key={acc.id} account={acc} />)}
             </div>
           </section>
         )}
 
         {/* ─── FOOTER ─── */}
-        <footer style={{ borderTop: '1px solid var(--border)', paddingTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 20, height: 20, borderRadius: 4, background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900, color: 'var(--gold-light)' }}>A</div>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>AllFi</span>
+        <footer className="border-t border-[--color-border] pt-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-black" style={{ background: '#00261E' }}>A</div>
+            <span className="font-serif text-sm font-bold text-[#00261E]">AllFi</span>
           </div>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-            Data shown is simulated for demonstration purposes only · Last updated: {new Date(data.lastUpdated).toLocaleString()}
+          <p className="text-xs text-[--color-text-muted]">
+            Simulated data for demonstration · Updated {new Date(data.lastUpdated).toLocaleString()}
           </p>
         </footer>
       </main>
