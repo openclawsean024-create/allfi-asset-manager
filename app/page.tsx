@@ -1,108 +1,205 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AllAccounts } from '@/types/accounts';
 
+/* ─── SEED DATA ───────────────────────────────────── */
 const SEED_DATA: AllAccounts = {
   bankAccounts: [
-    { id: 'bank-001', institution: 'Chase Bank', accountName: 'Checking ****4821', accountType: 'checking', balance: 12450.67, currency: 'USD', lastTransaction: { date: '2026-03-30', description: 'Direct Deposit - Payroll', amount: 3200.00 } },
-    { id: 'bank-002', institution: 'Chase Bank', accountName: 'Savings ****9832', accountType: 'savings', balance: 28400.00, currency: 'USD', lastTransaction: { date: '2026-03-28', description: 'Interest Payment', amount: 12.34 } },
+    {
+      id: 'bank-001',
+      institution: 'Chase Bank',
+      accountName: 'Checking ****4821',
+      accountType: 'checking',
+      balance: 12450.67,
+      currency: 'USD',
+      lastTransaction: { date: '2026-03-30', description: 'Direct Deposit - Payroll', amount: 3200.00 },
+    },
+    {
+      id: 'bank-002',
+      institution: 'Chase Bank',
+      accountName: 'Savings ****9832',
+      accountType: 'savings',
+      balance: 28400.00,
+      currency: 'USD',
+      lastTransaction: { date: '2026-03-28', description: 'Interest Payment', amount: 12.34 },
+    },
   ],
   stockAccounts: [
     {
-      id: 'stock-001', institution: 'TD Ameritrade', accountName: 'Individual Brokerage',
+      id: 'stock-001',
+      institution: 'TD Ameritrade',
+      accountName: 'Individual Brokerage',
       holdings: [
         { symbol: 'AAPL', name: 'Apple Inc.', shares: 15, avgCost: 148.50, currentPrice: 221.30, totalValue: 3319.50, totalGain: 1092.00, totalGainPercent: 49.09 },
         { symbol: 'NVDA', name: 'NVIDIA Corporation', shares: 8, avgCost: 480.00, currentPrice: 875.40, totalValue: 7003.20, totalGain: 3163.20, totalGainPercent: 82.38 },
         { symbol: 'MSFT', name: 'Microsoft Corporation', shares: 10, avgCost: 310.00, currentPrice: 398.75, totalValue: 3987.50, totalGain: 887.50, totalGainPercent: 28.63 },
       ],
-      totalValue: 14310.20, totalGain: 5142.70, totalGainPercent: 56.06,
+      totalValue: 14310.20,
+      totalGain: 5142.70,
+      totalGainPercent: 56.06,
     },
   ],
   cryptoAccounts: [
-    { id: 'crypto-001', institution: 'Coinbase', accountName: 'Main Portfolio', assets: [
-      { symbol: 'BTC', name: 'Bitcoin', amount: 0.45, currentPrice: 67420.00, value: 30339.00, change24h: 2.34 },
-      { symbol: 'ETH', name: 'Ethereum', amount: 3.2, currentPrice: 3520.00, value: 11264.00, change24h: -1.28 },
-      { symbol: 'SOL', name: 'Solana', amount: 25, currentPrice: 142.80, value: 3570.00, change24h: 5.67 },
-    ], totalValue: 45173.00, totalChange24h: 1.89 },
-    { id: 'crypto-002', institution: 'Binance', accountName: 'Trading Account', assets: [
-      { symbol: 'BNB', name: 'Binance Coin', amount: 5, currentPrice: 598.00, value: 2990.00, change24h: 0.45 },
-    ], totalValue: 2990.00, totalChange24h: 0.45 },
+    {
+      id: 'crypto-001',
+      institution: 'Coinbase',
+      accountName: 'Main Portfolio',
+      assets: [
+        { symbol: 'BTC', name: 'Bitcoin', amount: 0.45, currentPrice: 67420.00, value: 30339.00, change24h: 2.34 },
+        { symbol: 'ETH', name: 'Ethereum', amount: 3.2, currentPrice: 3520.00, value: 11264.00, change24h: -1.28 },
+        { symbol: 'SOL', name: 'Solana', amount: 25, currentPrice: 142.80, value: 3570.00, change24h: 5.67 },
+      ],
+      totalValue: 45173.00,
+      totalChange24h: 1.89,
+    },
+    {
+      id: 'crypto-002',
+      institution: 'Binance',
+      accountName: 'Trading Account',
+      assets: [
+        { symbol: 'BNB', name: 'Binance Coin', amount: 5, currentPrice: 598.00, value: 2990.00, change24h: 0.45 },
+      ],
+      totalValue: 2990.00,
+      totalChange24h: 0.45,
+    },
   ],
   totalNetWorth: 103323.87,
   netWorthByType: { bank: 40850.67, stocks: 14310.20, crypto: 48163.00 },
   lastUpdated: new Date().toISOString(),
 };
 
+/* ─── HELPERS ──────────────────────────────────────── */
 function formatCurrency(value: number, currency = 'USD') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 2 }).format(value);
 }
 function formatPercent(value: number) {
-  const sign = value >= 0 ? '+' : '';
-  return `${sign}${value.toFixed(2)}%`;
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
-function useCountUp(target: number, duration = 1800) {
-  const [value, setValue] = useState(0);
-  const start = useRef<number | null>(null);
-  const raf = useRef<number>(0);
+/* ─── STARFIELD CANVAS ─────────────────────────────── */
+function Starfield() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
-    const step = (ts: number) => {
-      if (!start.current) start.current = ts;
-      const progress = Math.min((ts - start.current) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(eased * target);
-      if (progress < 1) raf.current = requestAnimationFrame(step);
-    };
-    raf.current = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf.current);
-  }, [target, duration]);
-  return value;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    interface Star {
+      x: number; y: number; r: number; speed: number;
+      opacity: number; twinkle: number;
+    }
+
+    const stars: Star[] = [];
+
+    function resize() {
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initStars();
+    }
+
+    function initStars() {
+      if (!canvas) return;
+      const count = Math.floor((window.innerWidth * window.innerHeight) / 6000);
+      stars.length = 0;
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.4 + 0.2,
+          speed: Math.random() * 0.015 + 0.003,
+          opacity: Math.random() * 0.6 + 0.2,
+          twinkle: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    let raf: number;
+    let t = 0;
+
+    function draw() {
+      if (!canvas || !ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      t += 0.005;
+      for (const s of stars) {
+        const flicker = Math.sin(t * s.speed * 100 + s.twinkle) * 0.25 + 0.75;
+        const alpha = s.opacity * flicker;
+        const color = s.r > 1.0 ? `rgba(240,220,140,${alpha})` : `rgba(200,215,255,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+      raf = requestAnimationFrame(draw);
+    }
+
+    resize();
+    draw();
+    window.addEventListener('resize', resize);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
+  }, []);
+
+  return <canvas ref={canvasRef} id="starfield" />;
 }
 
-function ArcChart({ data }: { data: { label: string; value: number; color: string }[] }) {
-  const total = data.reduce((s, d) => s + d.value, 0);
+/* ─── SCROLL REVEAL HOOK ───────────────────────────── */
+function useScrollReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll('.reveal');
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            obs.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+}
+
+/* ─── DONUT CHART ──────────────────────────────────── */
+function DonutChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
   if (total === 0) return null;
   let cumulative = 0;
-  const slices = data.map(d => {
+  const slices = data.map((d) => {
     const start = cumulative;
     cumulative += (d.value / total) * 360;
     return { ...d, start, end: cumulative };
   });
-  const cx = 100, cy = 100, outerR = 82, innerR = 58;
-  function describeArc(startDeg: number, endDeg: number, r: number) {
-    const s = ((startDeg - 90) * Math.PI) / 180;
-    const e = ((endDeg - 90) * Math.PI) / 180;
-    const x1 = cx + r * Math.cos(s), y1 = cy + r * Math.sin(s);
-    const x2 = cx + r * Math.cos(e), y2 = cy + r * Math.sin(e);
+  const cx = 90, cy = 90, r = 70;
+  function arcPath(startDeg: number, endDeg: number) {
+    const start = ((startDeg - 90) * Math.PI) / 180;
+    const end = ((endDeg - 90) * Math.PI) / 180;
+    const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start);
+    const x2 = cx + r * Math.cos(end), y2 = cy + r * Math.sin(end);
     const large = endDeg - startDeg > 180 ? 1 : 0;
-    return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
+    return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
   }
   return (
-    <div className="relative flex flex-col items-center">
-      <svg width="200" height="200" viewBox="0 0 200 200" className="-rotate-90">
-        <defs>
-          <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-        </defs>
-        <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="20" />
-        {slices.map((s, i) => (
-          <path key={i} d={`${describeArc(s.start, s.end, outerR)} L ${cx} ${cy} Z`} fill={s.color} opacity="0.9" filter="url(#glow)" />
-        ))}
-        <circle cx={cx} cy={cy} r={innerR} fill="#030810" />
-        <text x={cx} y={cy - 10} textAnchor="middle" dominantBaseline="middle" fill="#E2C98A" fontSize="14" fontWeight="700" fontFamily="'Cormorant Garamond',Georgia,serif">$103K</text>
-        <text x={cx} y={cy + 10} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="9" letterSpacing="2">TOTAL AUM</text>
+    <div className="flex items-center gap-10">
+      <svg width="180" height="180" viewBox="0 0 180 180">
+        {slices.map((s, i) => <path key={i} d={arcPath(s.start, s.end)} fill={s.color} />)}
+        <circle cx={cx} cy={cy} r={52} fill="#050a14" />
+        <text x={cx} y={cy - 8} textAnchor="middle" dominantBaseline="middle" fontSize="15" fontWeight="700" fill="#d4af37">
+          {formatCurrency(total, 'USD').replace('.00', '').replace('$', ' $')}
+        </text>
+        <text x={cx} y={cy + 10} textAnchor="middle" fill="#4a6080" fontSize="11">Total</text>
       </svg>
-      <div className="mt-4 w-full space-y-2">
+      <div className="flex flex-col gap-3">
         {slices.map((s, i) => (
-          <div key={i} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color, boxShadow: `0 0 6px ${s.color}` }} />
-              <span className="text-[11px] text-white/50 tracking-wider">{s.label}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-[11px] text-white/70">{formatCurrency(s.value)}</span>
-              <span className="text-[10px] font-bold text-white/40 w-10 text-right">{((s.value / total) * 100).toFixed(1)}%</span>
-            </div>
+          <div key={i} className="flex items-center gap-3">
+            <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{s.label}</span>
+            <span className="text-sm font-semibold ml-auto pl-8" style={{ color: 'var(--text-primary)' }}>{formatCurrency(s.value)}</span>
           </div>
         ))}
       </div>
@@ -110,338 +207,333 @@ function ArcChart({ data }: { data: { label: string; value: number; color: strin
   );
 }
 
-function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
-  const w = 80, h = 32;
-  const min = Math.min(...data), max = Math.max(...data);
-  const range = max - min || 1;
-  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`).join(' ');
-  const color = positive ? '#4ADE80' : '#F87171';
-  return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none"><polyline points={pts} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-}
-
-function MiniBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+/* ─── BANK ROW ─────────────────────────────────────── */
+function BankAccountRow({ account }: { account: AllAccounts['bankAccounts'][0] }) {
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex justify-between items-baseline">
-        <span className="text-[10px] text-white/30 uppercase tracking-widest">{label}</span>
-        <span className="text-[11px] font-semibold text-white/80">{formatCurrency(value)}</span>
-      </div>
-      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(value / max) * 100}%`, background: `linear-gradient(90deg, ${color}, ${color}88)` }} />
+    <div className="gold-card" style={{ padding: '2px' }}>
+      <div className="gold-card-inner" style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #d4af37, #b8960c)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#050a14', fontWeight: 800, fontSize: 16, flexShrink: 0,
+        }}>
+          {account.institution[0]}
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 2 }}>{account.institution}</p>
+          <p style={{ fontSize: 15, fontWeight: 600 }}>{account.accountName}</p>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+            {account.lastTransaction.date} · {account.lastTransaction.description}
+          </p>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <p style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-serif)' }}>{formatCurrency(account.balance)}</p>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{account.accountType}</p>
+        </div>
       </div>
     </div>
   );
 }
 
-const RECENT_TRANSACTIONS = [
-  { date: '2026-03-30', description: 'Direct Deposit — Payroll', amount: 3200.00 },
-  { date: '2026-03-30', description: 'NVDA — Bought 2 shares', amount: -1750.80 },
-  { date: '2026-03-28', description: 'Interest Payment — Savings', amount: 12.34 },
-  { date: '2026-03-27', description: 'SOL — Bought 5.2 SOL', amount: -742.56 },
-  { date: '2026-03-26', description: 'AAPL — Dividend', amount: 18.90 },
-  { date: '2026-03-25', description: 'ETH — Sold 0.3 ETH', amount: 1056.00 },
-];
-
-const TICKER_DATA = [
-  { symbol: 'AAPL', price: 221.30, change: 1.24 }, { symbol: 'NVDA', price: 875.40, change: 4.12 },
-  { symbol: 'MSFT', price: 398.75, change: -0.83 }, { symbol: 'BTC', price: 67420, change: 2.34 },
-  { symbol: 'ETH', price: 3520, change: -1.28 }, { symbol: 'SOL', price: 142.80, change: 5.67 },
-  { symbol: 'SPY', price: 521.40, change: 0.34 }, { symbol: 'QQQ', price: 448.90, change: 0.88 },
-];
-
-function Navbar({ networth }: { networth: number }) {
+/* ─── STOCK ROW ─────────────────────────────────────── */
+function StockAccountRow({ account }: { account: AllAccounts['stockAccounts'][0] }) {
+  const gainColor = account.totalGain >= 0 ? 'var(--success)' : 'var(--danger)';
+  const gainBg = account.totalGain >= 0 ? 'var(--success-bg)' : 'var(--danger-bg)';
   return (
-    <nav style={{ background: 'linear-gradient(180deg,#030810 0%,rgba(3,8,16,0.95) 100%)', borderBottom: '1px solid rgba(226,201,138,0.1)' }}>
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="w-8 h-8 flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#E2C98A,#9E8B6E)', borderRadius: '4px' }}>
-              <span className="text-[13px] font-black" style={{ color: '#030810', fontFamily: "'Cormorant Garamond',Georgia,serif", fontStyle: 'italic' }}>A</span>
+    <div className="gold-card" style={{ padding: '2px' }}>
+      <div className="gold-card-inner" style={{ padding: '20px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 8,
+              background: 'linear-gradient(135deg, #d4af37, #b8960c)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#050a14', fontWeight: 800, fontSize: 14,
+            }}>
+              {account.institution[0]}
             </div>
-            <div className="absolute -inset-0.5 rounded" style={{ background: 'linear-gradient(135deg,#E2C98A,#9E8B6E)', opacity: 0.3, filter: 'blur(6px)', zIndex: -1 }} />
+            <div>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{account.institution}</p>
+              <p style={{ fontSize: 14, fontWeight: 600 }}>{account.accountName}</p>
+            </div>
           </div>
-          <div>
-            <span className="text-white font-bold tracking-[0.18em] text-sm" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif" }}>ALLFI</span>
-            <span className="block text-[8px] tracking-[0.22em] text-white/25 uppercase">Asset Intelligence</span>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-serif)' }}>{formatCurrency(account.totalValue)}</p>
+            <span style={{ fontSize: 12, fontWeight: 600, color: gainColor, background: gainBg, padding: '2px 8px', borderRadius: 999 }}>
+              {formatPercent(account.totalGainPercent)}
+            </span>
           </div>
         </div>
-        <div className="hidden md:flex items-center gap-8">
-          {['Overview', 'Holdings', 'Analytics', 'Transactions', 'Settings'].map(link => (
-            <span key={link} className={`text-[11px] tracking-widest uppercase cursor-pointer transition-colors ${link === 'Overview' ? 'text-[#E2C98A]' : 'text-white/40 hover:text-white/70'}`}>{link}</span>
-          ))}
-        </div>
-        <div className="flex items-center gap-5">
-          <div className="hidden sm:block text-right">
-            <p className="text-[8px] tracking-[0.2em] uppercase text-white/25">Total Net Worth</p>
-            <p className="text-sm font-bold text-white" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", letterSpacing: '-0.01em' }}>{formatCurrency(networth)}</p>
-          </div>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-[#030810] cursor-pointer" style={{ background: 'linear-gradient(135deg,#E2C98A,#9E8B6E)' }}>U</div>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-function TickerStrip() {
-  return (
-    <div className="overflow-hidden" style={{ background: 'rgba(3,8,16,0.8)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-      <div className="flex animate-ticker">
-        {[...TICKER_DATA, ...TICKER_DATA].map((t, i) => (
-          <div key={i} className="flex items-center gap-2 px-5 py-2 flex-shrink-0">
-            <span className="text-[10px] font-bold tracking-widest text-white/60">{t.symbol}</span>
-            <span className="text-[10px] text-white/80">{formatCurrency(t.price)}</span>
-            <span className={`text-[10px] font-bold ${t.change >= 0 ? 'text-[#4ADE80]' : 'text-[#F87171]'}`}>{formatPercent(t.change)}</span>
-          </div>
-        ))}
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              {['Symbol', 'Shares', 'Price', 'Total', 'Gain'].map(h => (
+                <th key={h} style={{ textAlign: 'right', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', padding: '6px 8px', letterSpacing: '0.04em' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {account.holdings.map((h) => {
+              const hgColor = h.totalGain >= 0 ? 'var(--success)' : 'var(--danger)';
+              return (
+                <tr key={h.symbol} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 13, color: 'var(--gold)' }}>{h.symbol}</span>
+                  </td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>{h.shares}</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>{formatCurrency(h.currentPrice)}</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{formatCurrency(h.totalValue)}</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, fontWeight: 700, color: hgColor }}>{formatPercent(h.totalGainPercent)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
-function HeroSection({ networth }: { networth: number }) {
-  const animated = useCountUp(networth, 2000);
-  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+/* ─── CRYPTO ROW ───────────────────────────────────── */
+function CryptoAccountRow({ account }: { account: AllAccounts['cryptoAccounts'][0] }) {
+  const changeColor = account.totalChange24h >= 0 ? 'var(--success)' : 'var(--danger)';
+  const changeBg = account.totalChange24h >= 0 ? 'var(--success-bg)' : 'var(--danger-bg)';
   return (
-    <section className="relative overflow-hidden px-6 py-16" style={{ background: 'linear-gradient(160deg,#030810 0%,#060F1F 50%,#030810 100%)' }}>
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%,rgba(226,201,138,0.06) 0%,transparent 70%)' }} />
-      <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px)', backgroundSize: '60px 60px' }} />
-      <div className="relative max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10">
-          <div>
-            <p className="text-[9px] tracking-[0.3em] uppercase text-[#E2C98A] mb-4 opacity-80">Private Wealth Overview</p>
-            <h1 className="text-5xl lg:text-6xl font-black text-white mb-3 leading-none" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", letterSpacing: '-0.02em', textShadow: '0 2px 40px rgba(226,201,138,0.15)' }}>
-              {formatCurrency(animated)}
-            </h1>
-            <p className="text-white/30 text-sm mt-2">As of {dateStr}</p>
-            <div className="flex items-center gap-4 mt-5">
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80]" />
-                <span className="text-[10px] text-white/40 tracking-wider">Markets Open</span>
-              </div>
-              <div className="w-px h-3 bg-white/10" />
-              <span className="text-[10px] text-white/25 tracking-wider">Live Data Feed</span>
+    <div className="gold-card" style={{ padding: '2px' }}>
+      <div className="gold-card-inner" style={{ padding: '20px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 8,
+              background: 'linear-gradient(135deg, #d4af37, #b8960c)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#050a14', fontWeight: 800, fontSize: 14,
+            }}>
+              {account.institution[0]}
+            </div>
+            <div>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{account.institution}</p>
+              <p style={{ fontSize: 14, fontWeight: 600 }}>{account.accountName}</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-6 lg:gap-10">
-            {[
-              { label: 'Banking', value: 40850.67, color: '#60A5FA', sub: '+0.00%' },
-              { label: 'Securities', value: 14310.20, color: '#A78BFA', sub: '+56.06%' },
-              { label: 'Digital Assets', value: 48163.00, color: '#E2C98A', sub: '+1.89%' },
-            ].map(stat => (
-              <div key={stat.label} className="text-center lg:text-right">
-                <p className="text-[9px] tracking-[0.2em] uppercase text-white/25 mb-1">{stat.label}</p>
-                <p className="text-lg font-bold text-white" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", letterSpacing: '-0.01em' }}>{formatCurrency(stat.value)}</p>
-                <p className="text-[10px] mt-0.5" style={{ color: stat.color }}>{stat.sub}</p>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-serif)' }}>{formatCurrency(account.totalValue)}</p>
+            <span style={{ fontSize: 12, fontWeight: 600, color: changeColor, background: changeBg, padding: '2px 8px', borderRadius: 999 }}>
+              {formatPercent(account.totalChange24h)} 24h
+            </span>
+          </div>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              {['Asset', 'Amount', 'Price', 'Value', '24h'].map(h => (
+                <th key={h} style={{ textAlign: 'right', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', padding: '6px 8px', letterSpacing: '0.04em' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {account.assets.map((a) => {
+              const agColor = a.change24h >= 0 ? 'var(--success)' : 'var(--danger)';
+              return (
+                <tr key={a.symbol} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '8px 8px', textAlign: 'right' }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 13, color: 'var(--gold)' }}>{a.symbol}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 6 }}>{a.name}</span>
+                  </td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>{a.amount}</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>{formatCurrency(a.currentPrice)}</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{formatCurrency(a.value)}</td>
+                  <td style={{ padding: '8px 8px', textAlign: 'right', fontSize: 13, fontWeight: 700, color: agColor }}>{formatPercent(a.change24h)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ─── DASHBOARD ────────────────────────────────────── */
+export default function Dashboard() {
+  const [data] = useState<AllAccounts>(SEED_DATA);
+  useScrollReveal();
+
+  const chartData = [
+    { label: 'Banking', value: data.netWorthByType.bank, color: '#1a2d4a' },
+    { label: 'Securities', value: data.netWorthByType.stocks, color: '#2d4a7a' },
+    { label: 'Digital Assets', value: data.netWorthByType.crypto, color: '#d4af37' },
+  ];
+  const totalNetWorth = data.totalNetWorth;
+  const bankPct = ((data.netWorthByType.bank / totalNetWorth) * 100).toFixed(1);
+  const stockPct = ((data.netWorthByType.stocks / totalNetWorth) * 100).toFixed(1);
+  const cryptoPct = ((data.netWorthByType.crypto / totalNetWorth) * 100).toFixed(1);
+
+  return (
+    <>
+      <Starfield />
+      <div style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
+
+        {/* ─── TOPBAR ─── */}
+        <div className="topbar">
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 32px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 6,
+                background: 'linear-gradient(135deg, #d4af37, #b8960c)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 900, fontSize: 13, color: '#050a14',
+              }}>A</div>
+              <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--text-primary)' }}>AllFi</span>
+              <span style={{ fontSize: 10, color: 'rgba(212,175,55,0.5)', fontWeight: 400, letterSpacing: '0.1em', marginLeft: 4 }}>PRIVATE</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Portfolio Overview</span>
+              <div style={{ width: 1, height: 16, background: 'var(--border)' }} />
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Total Net Worth</p>
+                <p style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-serif)', color: 'var(--gold)' }}>{formatCurrency(data.totalNetWorth)}</p>
               </div>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'var(--gold-dim)',
+                border: '1px solid var(--border-gold)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontWeight: 600, color: 'var(--gold)',
+              }}>U</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── SUBNAV ─── */}
+        <div style={{
+          background: 'rgba(10,22,40,0.85)',
+          borderBottom: '1px solid var(--border)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+        }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 32px', height: 44, display: 'flex', alignItems: 'center', gap: 4 }}>
+            {['Overview', 'Banking', 'Securities', 'Digital Assets', 'Insights'].map((item, i) => (
+              <button key={item} className={`subnav-btn${i === 0 ? ' active' : ''}`}>{item}</button>
             ))}
           </div>
         </div>
+
+        {/* ─── MAIN ─── */}
+        <main style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 32px 80px' }}>
+
+          {/* ─── HERO CARD ─── */}
+          <div className="gold-card reveal" style={{ padding: '2px', marginBottom: 40 }}>
+            <div className="gold-card-inner" style={{
+              padding: '40px 48px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 40,
+            }}>
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 10 }}>
+                  Total Net Worth · {new Date(data.lastUpdated).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </p>
+                <h1 className="net-worth-animated" style={{
+                  fontFamily: 'var(--font-serif)', fontSize: 48, fontWeight: 700,
+                  letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 24,
+                }}>
+                  {formatCurrency(data.totalNetWorth)}
+                </h1>
+                <div style={{ display: 'flex', gap: 32 }}>
+                  {[
+                    { label: 'Banking', value: bankPct + '%', amount: formatCurrency(data.netWorthByType.bank) },
+                    { label: 'Securities', value: stockPct + '%', amount: formatCurrency(data.netWorthByType.stocks) },
+                    { label: 'Digital Assets', value: cryptoPct + '%', amount: formatCurrency(data.netWorthByType.crypto) },
+                  ].map((item, i) => (
+                    <div key={item.label} className={`reveal reveal-delay-${i + 1}`}>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 2 }}>{item.label}</p>
+                      <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--gold)' }}>{item.value}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{item.amount}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <DonutChart data={chartData} />
+            </div>
+          </div>
+
+          {/* ─── BANKING ─── */}
+          {data.bankAccounts.length > 0 && (
+            <section style={{ marginBottom: 48 }} className="reveal">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div className="section-dot" />
+                  <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Banking</h2>
+                </div>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{formatCurrency(data.netWorthByType.bank)} total</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {data.bankAccounts.map((acc, i) => (
+                  <div key={acc.id} className={`reveal reveal-delay-${i + 1}`}>
+                    <BankAccountRow account={acc} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ─── SECURITIES ─── */}
+          {data.stockAccounts.length > 0 && (
+            <section style={{ marginBottom: 48 }} className="reveal">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div className="section-dot" style={{ background: '#2d4a7a', boxShadow: '0 0 8px #2d4a7a' }} />
+                  <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Securities</h2>
+                </div>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{formatCurrency(data.netWorthByType.stocks)} total</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {data.stockAccounts.map((acc, i) => (
+                  <div key={acc.id} className={`reveal reveal-delay-${i + 1}`}>
+                    <StockAccountRow account={acc} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ─── DIGITAL ASSETS ─── */}
+          {data.cryptoAccounts.length > 0 && (
+            <section style={{ marginBottom: 48 }} className="reveal">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div className="section-dot" />
+                  <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 700, color: 'var(--text-primary)' }}>Digital Assets</h2>
+                </div>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{formatCurrency(data.netWorthByType.crypto)} total</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {data.cryptoAccounts.map((acc, i) => (
+                  <div key={acc.id} className={`reveal reveal-delay-${i + 1}`}>
+                    <CryptoAccountRow account={acc} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ─── FOOTER ─── */}
+          <footer style={{ borderTop: '1px solid var(--border)', paddingTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: 4,
+                background: 'linear-gradient(135deg, #d4af37, #b8960c)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 900, color: '#050a14',
+              }}>A</div>
+              <span style={{ fontFamily: 'var(--font-serif)', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>AllFi</span>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              Data shown is simulated for demonstration purposes only · Last updated: {new Date(data.lastUpdated).toLocaleString()}
+            </p>
+          </footer>
+        </main>
       </div>
-    </section>
-  );
-}
-
-export default function Dashboard() {
-  const [data, setData] = useState<AllAccounts>(SEED_DATA);
-
-  useEffect(() => {
-    fetch('/api/accounts')
-      .then(r => r.json())
-      .then((apiData: AllAccounts) => setData(apiData))
-      .catch(() => {});
-  }, []);
-
-  const chartData = [
-    { label: 'Banking', value: data.netWorthByType.bank, color: '#3B82F6' },
-    { label: 'Securities', value: data.netWorthByType.stocks, color: '#8B5CF6' },
-    { label: 'Digital Assets', value: data.netWorthByType.crypto, color: '#E2C98A' },
-  ];
-
-  return (
-    <div className="min-h-screen" style={{ background: '#030810', fontFamily: "'Inter',sans-serif" }}>
-      <style>{`
-        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .animate-ticker { animation: ticker 40s linear infinite; }
-        @keyframes pulse-glow { 0%,100% { opacity: 0.3; } 50% { opacity: 0.7; } }
-        .animate-glow { animation: pulse-glow 3s ease-in-out infinite; }
-        @keyframes fade-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fade-in 0.5s ease forwards; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-      `}</style>
-
-      <Navbar networth={data.totalNetWorth} />
-      <TickerStrip />
-      <HeroSection networth={data.totalNetWorth} />
-
-      <main className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* LEFT */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* Allocation Chart */}
-            <div className="rounded-2xl p-6 animate-fade-in" style={{ background: 'linear-gradient(160deg,#0A1628 0%,#0D1F35 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-sm font-bold text-white/80" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", letterSpacing: '0.05em' }}>Asset Allocation</h2>
-                  <p className="text-[10px] text-white/25 mt-0.5 tracking-wider">Portfolio Distribution</p>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#4ADE80] animate-glow" />
-                  <span className="text-[9px] text-white/30 tracking-widest uppercase">Real-time</span>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center gap-8">
-                <ArcChart data={chartData} />
-                <div className="flex-1 w-full space-y-4">
-                  <MiniBar label="Banking" value={data.netWorthByType.bank} max={data.totalNetWorth} color="#3B82F6" />
-                  <MiniBar label="Securities" value={data.netWorthByType.stocks} max={data.totalNetWorth} color="#8B5CF6" />
-                  <MiniBar label="Digital Assets" value={data.netWorthByType.crypto} max={data.totalNetWorth} color="#E2C98A" />
-                </div>
-              </div>
-            </div>
-
-            {/* Holdings Table */}
-            <div className="rounded-2xl overflow-hidden animate-fade-in" style={{ background: 'linear-gradient(160deg,#0A1628 0%,#0D1F35 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="px-6 py-5 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div>
-                  <h2 className="text-sm font-bold text-white/80" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", letterSpacing: '0.05em' }}>Holdings</h2>
-                  <p className="text-[10px] text-white/25 mt-0.5">Securities &amp; Digital Assets</p>
-                </div>
-                <span className="text-[9px] tracking-widest uppercase text-white/20">All Positions</span>
-              </div>
-              <div className="grid grid-cols-12 px-6 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(0,0,0,0.2)' }}>
-                {['Asset', 'Price', '24h', 'Holdings', 'Value', 'Gain'].map((h, i) => (
-                  <span key={h} className="text-[9px] tracking-[0.15em] uppercase text-white/20" style={{ gridColumn: `span ${i === 0 ? 4 : 2}` }}>{h}</span>
-                ))}
-              </div>
-              {data.stockAccounts[0]?.holdings.map(h => {
-                const sparkData = Array.from({ length: 7 }, () => h.currentPrice * (0.95 + Math.random() * 0.1));
-                const isPos = h.totalGain >= 0;
-                return (
-                  <div key={h.symbol} className="grid grid-cols-12 items-center px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                    <div className="col-span-4 flex flex-col">
-                      <span className="text-sm font-bold text-white" style={{ fontFamily: "'JetBrains Mono',monospace", letterSpacing: '0.05em' }}>{h.symbol}</span>
-                      <span className="text-[10px] text-white/30 mt-0.5">{h.name}</span>
-                    </div>
-                    <div className="col-span-2 text-sm text-white/70" style={{ fontFamily: "'JetBrains Mono',monospace" }}>{formatCurrency(h.currentPrice)}</div>
-                    <div className="col-span-2"><Sparkline data={sparkData} positive={isPos} /></div>
-                    <div className="col-span-2 text-sm text-white/60">{h.shares} shares</div>
-                    <div className="col-span-2 flex flex-col items-end">
-                      <span className="text-sm font-bold text-white">{formatCurrency(h.totalValue)}</span>
-                      <span className={`text-[10px] font-bold ${isPos ? 'text-[#4ADE80]' : 'text-[#F87171]'}`}>{formatPercent(h.totalGainPercent)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-              {data.cryptoAccounts[0]?.assets.map(a => {
-                const isPos = a.change24h >= 0;
-                return (
-                  <div key={a.symbol} className="grid grid-cols-12 items-center px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                    <div className="col-span-4 flex flex-col">
-                      <span className="text-sm font-bold" style={{ fontFamily: "'JetBrains Mono',monospace", letterSpacing: '0.05em', color: '#E2C98A' }}>{a.symbol}</span>
-                      <span className="text-[10px] text-white/30 mt-0.5">{a.name}</span>
-                    </div>
-                    <div className="col-span-2 text-sm text-white/70" style={{ fontFamily: "'JetBrains Mono',monospace" }}>{formatCurrency(a.currentPrice)}</div>
-                    <div className="col-span-2">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isPos ? 'text-[#4ADE80] bg-[#4ADE80]/10' : 'text-[#F87171] bg-[#F87171]/10'}`}>{formatPercent(a.change24h)}</span>
-                    </div>
-                    <div className="col-span-2 text-sm text-white/60">{a.amount}</div>
-                    <div className="col-span-2 flex flex-col items-end">
-                      <span className="text-sm font-bold text-white">{formatCurrency(a.value)}</span>
-                      <span className="text-[10px] text-white/30">@ market</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* RIGHT */}
-          <div className="space-y-6">
-
-            {/* Net Worth Summary */}
-            <div className="rounded-2xl p-5 animate-fade-in" style={{ background: 'linear-gradient(160deg,#0A1628 0%,#0D1F35 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <h2 className="text-sm font-bold text-white/80 mb-4" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", letterSpacing: '0.05em' }}>Net Worth</h2>
-              <div className="space-y-3">
-                {[
-                  { label: 'Banking', value: data.netWorthByType.bank, color: '#3B82F6' },
-                  { label: 'Securities', value: data.netWorthByType.stocks, color: '#8B5CF6' },
-                  { label: 'Digital Assets', value: data.netWorthByType.crypto, color: '#E2C98A' },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}` }} />
-                      <span className="text-[11px] text-white/50">{item.label}</span>
-                    </div>
-                    <span className="text-[11px] font-semibold text-white/80">{formatCurrency(item.value)}</span>
-                  </div>
-                ))}
-                <div className="pt-3 mt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-white/30 uppercase tracking-wider">Total</span>
-                    <span className="text-base font-bold text-white" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif" }}>{formatCurrency(data.totalNetWorth)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Transactions */}
-            <div className="rounded-2xl overflow-hidden animate-fade-in" style={{ background: 'linear-gradient(160deg,#0A1628 0%,#0D1F35 100%)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <h2 className="text-sm font-bold text-white/80" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", letterSpacing: '0.05em' }}>Recent Activity</h2>
-                <span className="text-[9px] tracking-widest uppercase text-white/20">Last 6</span>
-              </div>
-              <div className="divide-y divide-white/[0.03]">
-                {RECENT_TRANSACTIONS.map((tx, i) => (
-                  <div key={i} className="px-5 py-3.5 flex items-center justify-between">
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[12px] text-white/70 truncate">{tx.description}</span>
-                      <span className="text-[9px] text-white/25 mt-0.5">{tx.date}</span>
-                    </div>
-                    <span className={`text-[12px] font-semibold flex-shrink-0 ml-3 ${tx.amount >= 0 ? 'text-[#4ADE80]' : 'text-white/60'}`} style={{ fontFamily: "'JetBrains Mono',monospace" }}>
-                      {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Performance */}
-            <div className="rounded-2xl p-5 animate-fade-in" style={{ background: 'linear-gradient(160deg,rgba(226,201,138,0.08) 0%,rgba(226,201,138,0.03) 100%)', border: '1px solid rgba(226,201,138,0.12)' }}>
-              <p className="text-[9px] tracking-[0.25em] uppercase text-[#E2C98A]/60 mb-3">Portfolio Performance</p>
-              <div className="flex items-end gap-3">
-                <span className="text-3xl font-black text-[#E2C98A]" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", letterSpacing: '-0.02em', textShadow: '0 0 30px rgba(226,201,138,0.3)' }}>
-                  +12.48%
-                </span>
-                <span className="text-[11px] text-white/30 mb-1">All-time return</span>
-              </div>
-              <div className="mt-4 space-y-1.5">
-                {['AAPL +49.09%', 'NVDA +82.38%', 'MSFT +28.63%'].map((item, i) => (
-                  <div key={i} className="flex justify-between text-[11px]">
-                    <span className="text-white/30">{item.split(' ')[0]}</span>
-                    <span className="text-[#4ADE80]/70">{item.split(' ')[1]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Footer */}
-        <footer className="mt-12 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#E2C98A,#9E8B6E)' }}>
-              <span className="text-[9px] font-black" style={{ color: '#030810', fontFamily: "'Cormorant Garamond',Georgia,serif", fontStyle: 'italic' }}>A</span>
-            </div>
-            <span className="text-sm font-bold tracking-widest text-white/40" style={{ fontFamily: "'Cormorant Garamond',Georgia,serif" }}>ALLFI</span>
-          </div>
-          <p className="text-xs text-white/20">Simulated data for demonstration purposes only · {new Date().toLocaleString()}</p>
-        </footer>
-      </main>
-    </div>
+    </>
   );
 }
