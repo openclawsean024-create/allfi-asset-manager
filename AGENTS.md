@@ -1,0 +1,6 @@
+<!-- BEGIN:nextjs-agent-rules -->
+# This is NOT the Next.js you know
+This version has breaking changes. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code.
+<!-- END:nextjs-agent-rules -->
+
+# AllFi 資產管家 v2.0 — 純前端
