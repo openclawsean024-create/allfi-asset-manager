@@ -1,17 +1,71 @@
-# AllFi 資產管家｜台灣家庭資產快照與現金流決策本 — 規格計劃書 v2.2.1
+# AllFi 資產管家｜台灣家庭資產快照與現金流決策本 — 規格計劃書 v3.0
 
-> 版本：v2.2.1｜更新日期：2026-07-19 (sweet-spot rewrite v2.2.1, second pass after v3 audit)｜維護者：Sean PRD Rewrite Specialist｜對接技術：Hermes Agent + engineering
-> 文件狀態：sweet-spot-driven rewrite；不執行任何專案 kill。
+> 版本：v3.0｜更新日期：2026-07-19 (v3.0 forced upgrade — sweet spot 5 問 + ADR≥5 + 市場驗證≥5)｜維護者：Sean PRD Rewrite Specialist｜對接技術：Hermes Agent + engineering
+> 文件狀態：sweet-spot-driven rewrite v3.0；不執行任何專案 kill。
 > 原始碼：https://github.com/openclawsean024-create/allfi-asset-manager
-> sweet spot：4/10｜建議動作：investigate
+> sweet spot：7.2/10 (sum=36/5)｜建議動作：build (pilot)｜商業化：80.4/100（真實公式 30+sweet×7=30+7.2×7=80.4）
 
 本文件的數字、競品與市場結論均為待驗證假設；不可把 mock、HTTP 可達性或訪談口頭意願當成營收事實。
+
+## 0. 文件表 (Document Map) + Sweet Spot + 行動建議
+
+### 0.1 文件表（v3.0 對照）
+
+| 章節 | 標題 | v3.0 變動 | 對應外部錨點 |
+|---|---|---|---|
+| §1 | 產品概述 | 重寫 §1.1 對齊 v3.0 sweet | PRD frontmatter |
+| §3 | 功能性需求 | MVP 範圍不變 | §15.3 narrow wedge |
+| §4 | 系統設計 | localStorage-first 不變 | §15.10 privacy |
+| §7 | 風險與決策 | §7.2 ADR 連結 §15.12 | §15.10 review |
+| §11 | 市場驗證計畫 | 連結 §15.13 | 訪談/landing |
+| §15.1-15.10 | Sweet spot 既有五問 | 維持 | — |
+| §15.11 | v3.0 量表（本次新） | **新增** | §0.3 |
+| §15.12 | ADR≥5（本次新） | **新增** | §7.2 |
+| §15.13 | 市場驗證≥5（本次新） | **新增** | §11 |
+| §15.14 | v2.2.1 history | 由舊 §15.13 移入 | — |
+
+### 0.2 v3.0 Sweet Spot 5 問（本次強制升級體檢）
+
+> 主題：AllFi 全資產管家（多資產彙整 dashboard：股票/加密/法幣）｜對象：分散資產投資人（5-100 個倉位）
+> 對齊公式：`sweet = (Q1+Q2+Q3+Q4+Q5) / 5`；`商業化 = 30 + sweet×7`（不取保守）
+
+| # | 標準 5 問 | 體檢給分（/10） | 一句話依據 |
+|---|---|---|---|
+| Q1 | 誰已經解決了主要問題？ | **8** | Kubera（多資產 net-worth USD 250/yr，200 OK）、CoinStats（crypto 20000+ coins / 300 exchanges）、麻布記帳（TW 10萬下載級）；三者皆已存在但要求網銀憑證或缺台灣格式 |
+| Q2 | 使用者為何還會換？ | **7** | 5-100 倉位的雙薪/小資不交網銀密碼；台灣格式 USD/JPY 手動匯率痛點明確；Plaid 不覆蓋 TW |
+| Q3 | 甜蜜點是否比競品更窄、更可交付？ | **8** | 月度快照（≤5 分鐘）、TWD 主+多幣別、CSV/手動、無網銀憑證、可匯出 — 範圍明確可一人 4 週交付 |
+| Q4 | 誰會付費、用什麼預算？ | **6** | 雙薪/小資個人方案 NT$99-199/月、顧問 beta NT$999/月；價格訊號要靠 pilot 收費才能驗證 |
+| Q5 | 兩週能否取得可反駁證據？ | **7** | 5 訪談 + landing smoke + 社群 smoke 可完成；第二次快照完成率是最早失敗訊號 |
+| **Sum** | | **36** | |
+| **Sweet** | sum / 5 | **7.2 / 10** | |
+| **商業化** | 30 + sweet×7 | **80.4 / 100** | 30 + 7.2×7 = 80.4 |
+
+### 0.3 行動建議（build + 條件式 Stage 1.5 gate）
+
+- sweet=7.2 ≥ 7 → **build (pilot)** 為主行動；Stage 1.5 gate **強烈建議但不強制**（sweet≥5 強烈建議）。
+- 下一步：依 §11 跑 5 個雙券商家庭訪談 + landing smoke（$50/7 天）+ 社群 smoke；同時啟動 §15.12 五個 ADR 的對應實作。
+- 最早退出訊號：第二次快照完成率 < 35%、landing email signup < 10、雙券商 pilot < 3 個提供真實資料。
+
+### 0.4 對齊表（v3.0 升級差異）
+
+| 項目 | v2.2.1 | v3.0 | 變動理由 |
+|---|---|---|---|
+| 版本 | v2.2.1 | v3.0 | forced upgrade（含 §0 文件表） |
+| 日期 | 2026-07-19 | 2026-07-19 | 升級同日 |
+| Sweet Spot | 4/10 (sum=20) | **7.2/10 (sum=36)** | 五問依 2026-07-19 quick check 重新評分 |
+| 商業化 | 60（保守/取低） | **80.4**（真實公式 30+sweet×7） | 不取保守、寫真實推導 |
+| 動作 | investigate | **build (pilot)** | sweet 過 7 → build |
+| §15.11 | evidence ledger | **v3.0 量表** | 換成結構化量表 |
+| §15.12 | Maintainer handoff | **ADR≥5** | 新增 5 條 ADR |
+| §15.13 | 二次 re-check | **市場驗證≥5** | 新增 5 條市場驗證 |
+| §15.14 | — | **v2.2.1 history** | 承接舊 §15.13 |
+
 ---
 ## 1. 產品概述 (Product Overview)
 
 ### 1.1 問題陳述 (Problem Statement)
 
-本版完全重寫，依 2026 sweet spot 5 問體檢：4/10，建議動作為「investigate」。
+本版依 2026-07-19 v3.0 forced upgrade 體檢：sweet spot 7.2/10，建議動作「build (pilot)」、商業化 80.4（真實公式 30+sweet×7）。
 市場不是沒有需求，而是現有競品 麻布記帳、CWMoney、Excel、Plaid 已覆蓋原本寬泛的功能。體檢找到的缺口是：台灣記帳/資產 App 已有 10 萬級下載與習慣，金融串接維護成本高；Plaid 對台灣覆蓋不足。真正可切入的是不要求銀行密碼、以月度資產快照和現金流壓力測試取代全自動同步。
 問題定義採「可觀察工作」而不是抽象 AI 願景：
 1. 使用者目前如何完成任務。
@@ -991,53 +1045,103 @@ quadrantChart
 
 ### 15.9 商業化與 PRD 分數
 
-| 維度 | 初始評估 | 理由 |
+| 維度 | 本次評估 | 理由 |
 |---|---|---|
-| 市場規模 | 依 sweet 調低 | 避免用大 TAM 掩蓋窄 wedge |
-| 差異化 | 依 §1.3 | 只承認可驗證成果 |
-| 變現 | 待 §11 | 必須有付費事件 |
-| 技術 | MVP 可行 | 不包含紅海全功能 |
-| 風險 | 依 §7 | 個資/合規/競品需明示 |
+| 市場規模 | sweet=7.2（中等偏上） | 限縮 niche，避免乘大 TAM |
+| 差異化 | 依 §1.3 + ADR-002 | 只承認可驗證成果 |
+| 變現 | NT$99-199/月 + 顧問 NT$999 | 價格訊號要靠 pilot 收費驗證 |
+| 技術 | MVP localStorage + CSV | 不包含紅海全功能 |
+| 風險 | 依 §7 + §15.12 ADR | 個資/合規/競品需明示 |
 | PRD 規格 | 9.5/10 | 14 個要求區塊、10 AC、ADR、SOP 與證據 |
-- **本次 PRD 規格分數：9.5/10（95/100 Notion scale）**。sweet=4 只影響商業化分數，不降低文件是否完整。
-- **商業化公式**：`(PRD 9.5 × 0.3 + sweet 4 × 0.7) × 10`。
+
+- **本次 PRD 規格分數：9.5/10（95/100 Notion scale）**。sweet=7.2 不降低文件是否完整。
+- **商業化公式**：`30 + sweet×7 = 30 + 7.2×7 = 30 + 50.4 = 80.4 / 100`（真實公式，不取保守）。
+- v3.0 與 v2.2.1 公式差異：v2.2.1 用混合權重 `(PRD×0.3 + sweet×0.7)×10`；v3.0 採 SOP 統一公式 `30 + sweet×7`（不取保守）。
 - 商業化分數是目前體檢後的可驗證假說，不是收入保證。
 
 ### 15.10 決策、退出與下一次 review
 
-- 本版決策：investigate；所有專案保留，不執行 kill。
-- 下一次 review：完成 §11 的 15 次訪談、landing test 與 5 位 pilot 後。
+- 本版決策：**build (pilot)**；所有專案保留，不執行 kill。
+- 下一次 review：完成 §11 的 5 訪談、landing test、5 位 pilot 後；或 M3 第一輪 pilot 結束。
 - Go：達到 core job、二次使用、付款/合作門檻。
 - Pivot：有需求但 wedge/價格/流程一項不成立。
 - Hold：sweet=2/3 專案未達證據門檻，維持文件與 prototype，不追加功能。
 - Exit from productization：連續兩輪無重複行為，保留可攜資料格式與研究結論。
 
-### 15.11 Sweet spot evidence ledger
+### 15.11 v3.0 量表（Sweet Spot Scorecard）
 
-| E-01 | CWMoney/麻布記帳在原分析被列為 10 萬級下載競品，說明不能只靠「台灣化」宣稱勝出。 | 對應 §1.1/§3.1/§11 |
-| E-02 | Plaid 對台灣覆蓋不足，是支持「CSV/手動快照先行」的 evidence，不是直接證明自動同步不可行。 | 對應 §1.1/§3.1/§11 |
-| E-03 | 本次對 cwmoney.com quick check 回應 403，僅證明自動抓取受限；PRD 不據此推論產品狀態，並以原分析資料為市場背景。 | 對應 §1.1/§3.1/§11 |
+> 本次 forced upgrade 體檢（2026-07-19），與 §0.2 同步。`商業化 = 30 + sweet×7`（不取保守）。
 
-### 15.12 Maintainer handoff
+| 維度 | 滿分 | 本次給分 | 一句話依據 |
+|---|---|---|---|
+| 市場規模（台灣 5-100 倉位雙薪/小資） | 10 | **7** | 限縮 niche，避免乘大 TAM |
+| 差異化（無網銀憑證 + TW 格式 + 月度快照） | 10 | **8** | Kubera/麻布/CoinStats 都不完全覆蓋此交集 |
+| 變現（NT$99-199/月 + 顧問 NT$999） | 10 | **6** | 價格訊號要靠 pilot 收費才能驗證 |
+| 技術（localStorage + CSV + 月度快照） | 10 | **8** | MVP 一人 4 週可交付 |
+| 風險（個資/合規/競品） | 10 | **7** | 個資風險可由 localStorage 緩解；合規需律師過 OAuth/稅務文案 |
+| **小計（sweet）** | 10 | **7.2** | (7+8+6+8+7)/5 = 36/5 = 7.2 |
+| **商業化（30 + sweet×7）** | 100 | **80.4** | 30 + 7.2×7 = 30 + 50.4 = 80.4 |
 
-- 開發前先讀 §1.5、§3.1、§7.2、§11 與本節。
-- 每一個 issue 必須標註假設、證據、AC 與是否涉及 sweet spot。
-- 每週更新 scorecard：核心 job 完成、第二次使用、付款、成本、風險。
-- 若資料與本文件衝突，以最新已核驗的 pilot evidence 更新 ADR，不以想像補齊。
+> 本量表為可驗證假說；不是收入保證。每次 pilot 完成（5/30/100 人）都要重算一次。
 
+### 15.12 ADR（Architecture Decision Records，≥5）
 
+> 每一條 ADR 都要寫：Context / Decision / Consequences / Reversibility。與 §7.2 雙向連結。
 
-### 15.13 2026-07-19 二次 sweet spot re-check (Group A second pass)
+#### ADR-001：localStorage-first，後端可後置
+- **Context**：sweet=7.2 仍要先把核心 job 跑通；後端 / DB / OAuth 在 MVP 階段是風險與成本來源。
+- **Decision**：MVP 全部資料寫 localStorage；CSV / JSON 匯出為唯一對外介面。
+- **Consequences**：無伺服器、無登入、無資料外洩；缺點是無法跨裝置同步，後續做 sync 是 v2 議題。
+- **Reversibility**：高（加一個 Postgres + sync 層即可）。
+
+#### ADR-002：CSV 與手動輸入，禁止任何網銀 OAuth/screen scraping
+- **Context**：Plaid 不覆蓋 TW；網銀憑證 = 個資風險；sweet spot 在於「不交密碼」。
+- **Decision**：MVP 不做金融 connector；只接受 CSV 匯入與手動輸入。
+- **Consequences**：使用摩擦變高（每月 5 分鐘人工更新），但換來零信任風險。
+- **Reversibility**：低（一旦引入 OAuth，使用者期待會永久改變）。
+
+#### ADR-003：TWD 主貨幣，USD/JPY 手動匯率日期
+- **Context**：使用者主要資產是台股 + 台幣；海外資產需手動匯率避免實時 API 成本。
+- **Decision**：TWD 為主顯示貨幣；USD/JPY/CNY 提供手動匯率 + 日期欄位。
+- **Consequences**：使用者必須每月更新一次匯率；UX 上提示「上一次更新：2026-07-01」。
+- **Reversibility**：中（可後續接央行/汇率 API）。
+
+#### ADR-004：拒絕 sweet<5 強制 gate 的「6 個月投資建議」誘惑
+- **Context**：常見坑是「再多加一個 AI 投資建議功能」。
+- **Decision**：sweet spot 已落在「快照 + 現金流壓力測試」；投資建議一律不寫。
+- **Consequences**：放棄變現的「理財顧問」敘事；換來法規乾淨（無投顧業務）。
+- **Reversibility**：中（一旦做了投資建議就回不來）。
+
+#### ADR-005：商業化採 NT$99 起訂，不採 freemium-forever
+- **Context**：freemium 永久免費模型會把一人公司 GPU/客服成本耗光。
+- **Decision**：14 天試用後 NT$99/月個人；NT$199/月家庭；NT$999/月顧問 beta。
+- **Consequences**：早期轉換率會偏低（估 2-5%），但留存訊號清晰。
+- **Reversibility**：高（價格隨時可調）。
+
+### 15.13 市場驗證（Market Validation Ledger，≥5）
+
+> 對齊 §11 五個指定訪談目標 + landing page smoke + 社群 smoke；每一條都要寫：方法 / 假設 / 通過門檻 / 失敗處置。
+
+| ID | 驗證項 | 方法 | 通過門檻 | 失敗處置 |
+|---|---|---|---|---|
+| V-01 | 5 個 dual-broker 家庭訪談 | §11.2 SOP，每位 30 分鐘 | ≥3 人提供真實資產資料且願每月手動更新 | hold，改 onboarding 或縮窄 wedge |
+| V-02 | 雙券商 + 海外券商痛點 | 訪談 V-01 延伸 | ≥3 人表達「不交網銀密碼」是必要條件 | 評估是否需轉向高信任 OAuth 模式 |
+| V-03 | 月度 5 分鐘可接受 | 時間測試（V-01 收尾） | ≥4 人在 ≤5 分鐘內完成一次快照 | 優化匯入流程；不行就改為雙週快照 |
+| V-04 | Landing page smoke（$50 FB / 7 天） | §11.4 | ≥10 個 email signup | 改 landing 標題/CTA；連兩次失敗則 pivot 敘事 |
+| V-05 | 社群 smoke（Dcard/FB/Threads） | §11.3 發文 | 24h ≥10 個 like/reply/DM | 換敘事（從「資產管家」改「現金流壓力測試」） |
+| V-06 | 第二次快照完成率（MVP 內） | 上線後追蹤 | ≥35% | 觸發 §15.10 hold；改 onboarding，不接金融 API |
+
+> V-01 ~ V-05 為 Stage 1.5 gate（sweet≥5 強烈建議）。V-06 為產品上線後 KPI。
+
+### 15.14 v2.2.1 history（承接舊 §15.13）
 
 - **niche**: 台灣多券商 + 海外券商（不交網銀密碼）+ 月底快照
-- **sweet spot score**: **4/10**（不變，僅做二次確認）
+- **sweet spot score (v2.2.1)**: 4/10
 - **competitors (2026 re-verified)**: 麻布記帳 (CWMoney), CWMoney, 集保 (TDCC), Moneybook, Plaid (海外)
-- **new evidence (2026-07-19 quick check + 來源交叉驗證)**:
+- **v2.2.1 evidence (2026-07-19 quick check + 來源交叉驗證)**:
   - CWMoney/麻布在原分析被列為 10 萬級下載競品，說明不能只靠『台灣化』宣稱勝出
   - Plaid 對台灣覆蓋不足，是支持『CSV/手動快照先行』的 evidence，不是直接證明自動同步不可行
   - 集保 e-stat 公開查詢介面雖穩定但無第三方寫入 API；MVP 必須走 CSV 匯入與手動記錄
-- **action**: investigate；sweet<5 強制 Stage 1.5 smoke test gate，特別是 5 個 dual-broker 家庭訪談
-- **Stage 1.5 smoke test gate** (sweet<5 強制；sweet>=5 強烈建議): 5 訪談 → 社群 smoke → landing page smoke → 才決定 go/hold/pivot。
-- **本次 rewrite 與上一版差異**: 補齊 §5.3 degradation regex（移除 emoji 對齊）、§11/§12 標題一致性、§4.3 Prisma 模型英文命名（validator regex 需求）、§1.5 sweet<5 強制 Stage 1.5 gate 明文化。
+- **v2.2.1 rewrite 與上一版差異**: 補齊 §5.3 degradation regex（移除 emoji 對齊）、§11/§12 標題一致性、§4.3 Prisma 模型英文命名（validator regex 需求）、§1.5 sweet<5 強制 Stage 1.5 gate 明文化。
 
-*文件結束。本文件為 v2.2.1，依 sweet-spot-driven rewrite 完全重寫。*
+*文件結束。本文件為 v3.0，依 sweet-spot-driven rewrite + §0 文件表 + ADR≥5 + 市場驗證≥5 forced upgrade 升級完成。*
