@@ -1,9 +1,13 @@
-# AllFi 資產管家｜台灣家庭資產快照與現金流決策本 — 規格計劃書 v3.0
+# AllFi 資產管家｜台灣家庭資產快照與現金流決策本 — 規格計劃書 v3.0.2
 
-> 版本：v3.0｜更新日期：2026-07-19 (v3.0 forced upgrade — sweet spot 5 問 + ADR≥5 + 市場驗證≥5)｜維護者：Sean PRD Rewrite Specialist｜對接技術：Hermes Agent + engineering
-> 文件狀態：sweet-spot-driven rewrite v3.0；不執行任何專案 kill。
+> 版本：v3.0.2 (fleet upgrade)｜更新日期：2026-09-06｜維護者：Sean 10-repo-fleet
+> 對齊 SPEC v3.0 契約（§1–§19）｜上版 v3.0 (2026-07-19 sweet-spot-driven rewrite)
+> 文件狀態：v3.0.2 升級 — 加 PRD 文件表註腳 + GHA workflow 對齊 + 補 v3.0.2 變更日誌
 > 原始碼：https://github.com/openclawsean024-create/allfi-asset-manager
-> sweet spot：7.2/10 (sum=36/5)｜建議動作：build (pilot)｜商業化：80.4/100（真實公式 30+sweet×7=30+7.2×7=80.4）
+> sweet spot：7.2/10 (sum=36/5)｜建議動作：build (pilot)｜商業化：80.4/100
+
+> v3.0.2 完成於 2026-09-06 by Sean 10-repo-fleet(Batch 4C)
+> 此次僅做 fleet alignment(PRD/CHANGELOG/GHA/lint config),不更動 §1–§15 內容
 
 本文件的數字、競品與市場結論均為待驗證假設；不可把 mock、HTTP 可達性或訪談口頭意願當成營收事實。
 
